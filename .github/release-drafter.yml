@@ -1,0 +1,2 @@
+_extends: .github
+tag-template: helm-tool-$NEXT_MINOR_VERSION

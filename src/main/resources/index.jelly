@@ -1,0 +1,4 @@
+<?jelly escape-by-default='true'?>
+<div>
+    Simple plugin to implement Helm tool for pipelines
+</div>
