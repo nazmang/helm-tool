@@ -1,4 +1,4 @@
 <?jelly escape-by-default='true'?>
 <div>
-    Simple plugin to implement Helm tool for pipelines
+    This plugin provides a wrapper for <a href="https://helm.sh">Helm</a> to install charts.
 </div>

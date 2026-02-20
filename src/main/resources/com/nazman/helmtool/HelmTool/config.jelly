@@ -1,0 +1,30 @@
+<?jelly escape-by-default='true'?>
+<j:jelly xmlns:j="jelly:core"
+xmlns:f="/lib/form">
+<f:entry title="Release Name" field="releaseName">
+<f:textbox />
+</f:entry>
+<f:entry title="Chart Path or URL" field="chartPath" description="Enter a local path (e.g., './my-chart') or a URL (e.g., 'https://example.com/my-chart.tgz')">
+<f:textbox />
+</f:entry>
+<f:entry title="Helm Installation" field="helmInstallation">
+<f:select />
+</f:entry>
+<f:entry title="Additional Helm Arguments" field="additionalArgs" description="Additional args for Helm command line (e.g., '--dry-run --create-namespace')">
+<f:textbox />
+</f:entry>
+<f:entry title="Repositories">
+<f:repeatable name="repositories" var="repo" items="${instance.repositories}">
+<div width="100%">
+<f:entry title="Repository Name">
+<f:textbox name="name" value="${repo.name}" />
+</f:entry>
+<f:entry title="Repository URL" description="Must be a valid URL (e.g., https://charts.helm.sh/stable)">
+<f:textbox name="url" value="${repo.url}" checkUrl="true" />
+</f:entry>
+<f:repeatableDeleteButton />
+</div>
+</f:repeatable>
+</f:entry>
+
+</j:jelly>

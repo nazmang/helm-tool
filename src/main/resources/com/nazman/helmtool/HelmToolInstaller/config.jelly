@@ -2,8 +2,8 @@
 <j:jelly xmlns:j="jelly:core"
 xmlns:f="/lib/form">
 
-<f:entry title="Download URL ID" field="id">
-<f:textbox />
+<f:entry title="Download URL" field="downloadUrl" description="URL to download Helm from (e.g., https://get.helm.sh/helm-v3.17.2-linux-amd64.tar.gz)">
+<f:textbox default="https://get.helm.sh/helm-v3.17.2-linux-amd64.tar.gz" />
 </f:entry>
 
 </j:jelly>
