@@ -178,14 +178,21 @@ See [Releases](https://github.com/nazmang/helm-tool-plugin/releases) and the [Ch
 
 ### Creating a release
 
-Releases are built and published automatically via GitHub Actions when you push a version tag:
+Releases are built and published automatically via GitHub Actions.
+
+**Option 1 – From the GitHub UI (recommended)**  
+1. Go to **Actions** → **Prepare release** → **Run workflow**.  
+2. Choose the branch (e.g. `main`), enter the version (e.g. `1.0.0`), and run.  
+3. The workflow creates and pushes tag `v<version>`, which triggers the **Release** workflow to build the plugin and publish a GitHub Release with the `.hpi` file.
+
+**Option 2 – From the command line**
 
 ```bash
 git tag v1.0.0
 git push origin v1.0.0
 ```
 
-The workflow will build the plugin, create a GitHub Release for that tag, and attach the `.hpi` file. Ensure the tag matches the version you want (e.g. `v1.0.0` for version `1.0.0`).
+The **Release** workflow will build the plugin, create a GitHub Release for that tag, and attach the `.hpi` file.
 
 ## Contributing
 
