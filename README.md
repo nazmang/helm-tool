@@ -37,8 +37,8 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
 2. Under **Helm**, click **Add Helm**.
 3. Set:
    - **Name** – e.g. `helm-3.14`
-   - **Install automatically** – optionally enable and add an **Install from URL** installer with the Helm download URL (e.g. `https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz`).
-   - Or leave automatic installation off and set **HELM_HOME** to the directory that contains the `helm` binary on the agent.
+   - **Install automatically** – optionally enable and add an **Install from URL** installer with the Helm download URL (e.g. `https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz`). The plugin will download and extract the binary on each agent.
+   - Or leave automatic installation off and set **HELM_HOME** to the **directory that contains the `helm` binary** on the agent (e.g. `/usr/bin` if the binary is at `/usr/bin/helm`, or `/opt/helm` if you installed Helm there).
 
 4. Save.
 
@@ -131,6 +131,26 @@ pipeline {
 - **Chart path:** Use `oci://<registry-host>/<org>/<repo>/<chart>` (e.g. `oci://ghcr.io/kubelauncher/charts/redis`).
 - **Credentials:** Create a Jenkins **Username and password** credential (e.g. ID `ghcr.io-credentials`) with a [GitHub PAT](https://docs.github.com/en/authentication/keeping-your-account-and-data-secure/creating-a-personal-access-token) as the password for private GHCR charts.
 - **Version:** Pin the chart version with `--version <version>` in **Additional arguments** when using OCI.
+
+## Troubleshooting
+
+### "Helm binary not found at /usr/bin/helm" (or similar)
+
+This means the plugin is looking for the `helm` executable in the directory you set as **HELM_HOME**, but it is not there (or auto-install is disabled and the binary was never installed).
+
+**Options:**
+
+1. **Install Helm on the agent** where the job runs so that the binary exists at the configured path:
+   - Linux (system-wide): download from [get.helm.sh](https://get.helm.sh/) and place the `helm` binary in the HELM_HOME directory (e.g. `/usr/bin`), or use your distro’s package (e.g. `sudo apt install helm` if available).
+   - Or install to a custom directory (e.g. `/opt/helm`) and set **HELM_HOME** to that directory in Global Tool Configuration.
+
+2. **Use automatic installation** (recommended): In **Manage Jenkins → Global Tool Configuration → Helm**, enable **Install automatically**, add the **Install from URL** installer, and set the URL (e.g. `https://get.helm.sh/helm-v3.14.0-linux-amd64.tar.gz`). The plugin will download and install Helm on each agent when needed.
+
+3. **Check the path**: Ensure HELM_HOME is the **directory containing** the `helm` binary, not the path to the binary itself. For example use `/usr/bin` (so the plugin looks for `/usr/bin/helm`), not `/usr/bin/helm`.
+
+### "Helm is in my container but the step still fails"
+
+The Helm step runs on **the node that is executing the current build stage** (the executor’s node). If your pipeline uses multiple agents—e.g. one container for build and another for "Deploy to cloud"—the deploy step runs on the deploy agent, not necessarily the container where you verified `helm`. Check the error message: it now includes the **node name** where the binary was not found. Install Helm (or enable automatic installation) on **that** node, or run the deploy stage on the same agent that has Helm (e.g. use the same `agent`/container for the stage that runs the `helm` step).
 
 ## Building from source
 
