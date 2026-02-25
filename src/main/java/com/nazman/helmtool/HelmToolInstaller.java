@@ -63,6 +63,17 @@ public class HelmToolInstaller extends ToolInstaller {
                 isAbsolutePath(home) ? new FilePath(rootPath.getChannel(), home) : new FilePath(rootPath, home);
         installationDir.mkdirs();
 
+        // On remote agents (e.g. k8s pods), the configured home may be read-only (e.g. /usr/bin). Use a writable
+        // fallback so auto-install can succeed.
+        if (installationDir.isRemote() && !canWrite(installationDir)) {
+            FilePath fallback = rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
+            log.getLogger()
+                    .println("Helm home " + installationDir.getRemote() + " is not writable on this node; using "
+                            + fallback.getRemote() + " for installation.");
+            installationDir = fallback;
+            installationDir.mkdirs();
+        }
+
         // Download the archive from URL (with timeouts to avoid hanging in containers)
         FilePath downloaded = installationDir.child(".download/helm.tar.gz");
         FilePath downloadParent = downloaded.getParent();
@@ -132,6 +143,18 @@ public class HelmToolInstaller extends ToolInstaller {
         if (exit != 0) {
             throw new IOException(
                     "tar extraction failed with exit code " + exit + ". Ensure 'tar' is available on the agent.");
+        }
+    }
+
+    /** Returns true if we can create and delete a file in the given directory (used to detect read-only paths). */
+    private static boolean canWrite(FilePath dir) {
+        try {
+            FilePath probe = dir.child(".helm-write-probe-" + System.currentTimeMillis());
+            probe.write("", "UTF-8");
+            probe.delete();
+            return true;
+        } catch (Exception e) {
+            return false;
         }
     }
 
