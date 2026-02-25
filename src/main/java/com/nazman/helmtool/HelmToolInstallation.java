@@ -66,8 +66,10 @@ public class HelmToolInstallation extends ToolInstallation implements NodeSpecif
         FilePath helmBinary = installationDir.child("helm");
 
         if (!helmBinary.exists()) {
+            String nodeName = node.getDisplayName();
             throw new IOException("Helm binary not found at " + helmBinary.getRemote()
-                    + ". Please ensure Helm is installed at the specified location.");
+                    + " on node '" + nodeName
+                    + "'. Please ensure Helm is installed at the specified location on that node.");
         }
 
         return helmBinary.getRemote();

@@ -9,7 +9,10 @@ import hudson.tools.ToolInstallation;
 import hudson.tools.ToolInstaller;
 import hudson.tools.ToolInstallerDescriptor;
 import java.io.IOException;
+import java.io.InputStream;
 import java.net.URISyntaxException;
+import java.net.URL;
+import java.net.URLConnection;
 import org.kohsuke.stapler.DataBoundConstructor;
 
 public class HelmToolInstaller extends ToolInstaller {
@@ -36,6 +39,11 @@ public class HelmToolInstaller extends ToolInstaller {
         return true; // apply on all nodes including the Jenkins controller
     }
 
+    /** Connect timeout for Helm download (milliseconds). */
+    private static final int DOWNLOAD_CONNECT_TIMEOUT_MS = 30_000;
+    /** Read timeout for Helm download (milliseconds). */
+    private static final int DOWNLOAD_READ_TIMEOUT_MS = 300_000;
+
     @Override
     public FilePath performInstallation(ToolInstallation tool, Node node, TaskListener log)
             throws IOException, InterruptedException {
@@ -54,22 +62,30 @@ public class HelmToolInstaller extends ToolInstaller {
                 isAbsolutePath(home) ? new FilePath(rootPath.getChannel(), home) : new FilePath(rootPath, home);
         installationDir.mkdirs();
 
-        // Download the archive from URL (URL already contains correct version and arch)
+        // Download the archive from URL (with timeouts to avoid hanging in containers)
         FilePath downloaded = installationDir.child(".download/helm.tar.gz");
         FilePath downloadParent = downloaded.getParent();
         if (downloadParent != null) {
             downloadParent.mkdirs();
         }
+        if (downloadUrl == null || downloadUrl.isEmpty()) {
+            throw new IOException("Download URL is null or empty");
+        }
+        log.getLogger().println("Downloading Helm from " + downloadUrl + " ...");
         try {
-            if (downloadUrl == null || downloadUrl.isEmpty()) {
-                throw new IOException("Download URL is null or empty");
+            URL url = new java.net.URI(downloadUrl).toURL();
+            URLConnection conn = url.openConnection();
+            conn.setConnectTimeout(DOWNLOAD_CONNECT_TIMEOUT_MS);
+            conn.setReadTimeout(DOWNLOAD_READ_TIMEOUT_MS);
+            try (InputStream in = conn.getInputStream()) {
+                downloaded.copyFrom(in);
             }
-            downloaded.copyFrom(new java.net.URI(downloadUrl).toURL());
         } catch (URISyntaxException e) {
             throw new IOException("Invalid download URL: " + downloadUrl, e);
         }
 
         // Extract to a temp dir; archive has one top-level dir (e.g. linux-amd64) with helm inside
+        log.getLogger().println("Extracting archive...");
         FilePath extractDir = installationDir.child(".extract");
         extractDir.mkdirs();
         extractDir.untarFrom(downloaded.read(), FilePath.TarCompression.GZIP);
@@ -91,6 +107,7 @@ public class HelmToolInstaller extends ToolInstaller {
             targetBinary.chmod(0755);
         }
 
+        log.getLogger().println("Helm installed successfully at " + targetBinary.getRemote());
         return installationDir;
     }
 
