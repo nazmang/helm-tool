@@ -2,6 +2,7 @@ package com.nazman.helmtool;
 
 import hudson.Extension;
 import hudson.FilePath;
+import hudson.Launcher;
 import hudson.Util;
 import hudson.model.Node;
 import hudson.model.TaskListener;
@@ -84,11 +85,16 @@ public class HelmToolInstaller extends ToolInstaller {
             throw new IOException("Invalid download URL: " + downloadUrl, e);
         }
 
-        // Extract to a temp dir; archive has one top-level dir (e.g. linux-amd64) with helm inside
+        // Extract on the agent with tar to avoid streaming the archive over the remoting channel (which can hang in
+        // containers)
         log.getLogger().println("Extracting archive...");
         FilePath extractDir = installationDir.child(".extract");
         extractDir.mkdirs();
-        extractDir.untarFrom(downloaded.read(), FilePath.TarCompression.GZIP);
+        if (installationDir.isRemote()) {
+            extractWithTar(installationDir, extractDir, downloaded, node, log);
+        } else {
+            extractDir.untarFrom(downloaded.read(), FilePath.TarCompression.GZIP);
+        }
         downloaded.delete();
 
         // Find helm binary (helm or helm.exe) in extracted content
@@ -109,6 +115,24 @@ public class HelmToolInstaller extends ToolInstaller {
 
         log.getLogger().println("Helm installed successfully at " + targetBinary.getRemote());
         return installationDir;
+    }
+
+    /**
+     * Extracts the helm tarball on the agent using tar, so the archive is not streamed over the channel.
+     */
+    private void extractWithTar(
+            FilePath installationDir, FilePath extractDir, FilePath downloaded, Node node, TaskListener log)
+            throws IOException, InterruptedException {
+        Launcher launcher = node.createLauncher(log);
+        int exit = launcher.launch()
+                .cmds("tar", "-xzf", ".download/helm.tar.gz", "-C", ".extract")
+                .pwd(installationDir)
+                .quiet(true)
+                .join();
+        if (exit != 0) {
+            throw new IOException(
+                    "tar extraction failed with exit code " + exit + ". Ensure 'tar' is available on the agent.");
+        }
     }
 
     private static boolean isAbsolutePath(String path) {
