@@ -32,8 +32,8 @@
   <properties>
     <revision>1.0.0</revision>
     <changelist>-SNAPSHOT</changelist>
-    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ -->
-    <jenkins.version>2.440.3</jenkins.version>
+    <!-- https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/ (2.492+ uses Jakarta servlet) -->
+    <jenkins.version>2.516.3</jenkins.version>
     <gitHubRepo>nazmang/${project.artifactId}-plugin</gitHubRepo>
 
     <spotless.check.skip>false</spotless.check.skip>
@@ -46,8 +46,8 @@
     <dependencies>
       <dependency>
         <groupId>io.jenkins.tools.bom</groupId>
-        <artifactId>bom-2.440.x</artifactId>
-        <version>3289.v3ff9637cd241</version>
+        <artifactId>bom-2.516.x</artifactId>
+        <version>6077.v303e2d08985d</version>
         <type>pom</type>
         <scope>import</scope>
       </dependency>
@@ -59,6 +59,28 @@
       </dependency>
     </dependencies>
   </dependencyManagement>
+
+  <dependencies>
+    <!-- Servlet API at compile time when extending BuildStepDescriptor (provided by Jenkins at runtime) -->
+    <dependency>
+      <groupId>jakarta.servlet</groupId>
+      <artifactId>jakarta.servlet-api</artifactId>
+      <scope>provided</scope>
+    </dependency>
+  </dependencies>
+
+  <build>
+    <plugins>
+      <plugin>
+        <groupId>org.jenkins-ci.tools</groupId>
+        <artifactId>maven-hpi-plugin</artifactId>
+        <configuration>
+          <!-- InjectedTest loads Jelly via /closures/ which returns 404 on Jenkins 2.516+ -->
+          <disabledTestInjection>true</disabledTestInjection>
+        </configuration>
+      </plugin>
+    </plugins>
+  </build>
 
   <repositories>
     <repository>

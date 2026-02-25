@@ -20,7 +20,7 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
 
 ## Requirements
 
-- **Jenkins:** 2.440.3 or later (see [Jenkins baseline](https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/) for your Jenkins version).
+- **Jenkins:** 2.516.3 or later (see [Jenkins baseline](https://www.jenkins.io/doc/developer/plugin-development/choosing-jenkins-baseline/) for your Jenkins version).
 - **Java:** 21 (for building and running the plugin).
 - **Helm:** Provided by the plugin via Global Tool (install from URL) or pre-installed and configured in “Helm” tool with a valid home path.
 
