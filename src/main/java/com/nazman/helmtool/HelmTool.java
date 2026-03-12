@@ -178,7 +178,7 @@ public class HelmTool extends Builder implements SimpleBuildStep {
         String helmPath = helmTool.getHelmBinaryPath(node, listener);
         listener.getLogger().println("Using Helm binary at: " + helmPath);
 
-        // Verify Helm is runnable and log version before running install
+        // Verify Helm is runnable and log version before running upgrade --install
         listener.getLogger().println("Checking Helm version...");
         int versionExit = launcher.launch()
                 .cmds(helmPath, "version")
@@ -237,7 +237,7 @@ public class HelmTool extends Builder implements SimpleBuildStep {
             valuesFileArg = "-f " + valuesFile.trim() + " ";
         }
         String helmCommand = String.format(
-                "%s install %s %s %s%s",
+                "%s upgrade --install %s %s %s%s",
                 helmPath,
                 releaseName,
                 chartPath,

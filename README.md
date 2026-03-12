@@ -1,6 +1,6 @@
 # Helm Plugin for Jenkins
 
-A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](https://helm.sh/) to install charts in your pipelines and freestyle jobs. It adds a **Global Tool** for installing Helm on agents and a **build step** to run `helm install` with configurable release name, chart path, repositories, and arguments.
+A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](https://helm.sh/) to install charts in your pipelines and freestyle jobs. It adds a **Global Tool** for installing Helm on agents and a **build step** to run `helm upgrade --install` with configurable release name, chart path, repositories, and arguments.
 
 ## Features
 
@@ -8,13 +8,13 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
   Install one or more Helm versions from custom download URLs. The plugin downloads the official Helm `.tar.gz` archive and extracts the binary on each agent (controller and agents).
 
 - **Build step: Deploy Helm chart**  
-  Run `helm install` from freestyle or Pipeline jobs with:
+  Run `helm upgrade --install` from freestyle or Pipeline jobs with:
   - **Release name** – name of the Helm release
   - **Chart path** – path to the chart (directory or `repo/chart`)
   - **Helm installation** – choice of configured Helm tool (or first available if not set)
   - **Values file** – path to a values file passed as `-f` (default: `values.yaml`); leave empty to omit
-  - **Additional arguments** – extra flags for `helm install` (e.g. `--dry-run`, `--wait`, `--timeout 5m`)
-  - **Repositories** – optional list of `helm repo add` entries (name + URL); the plugin runs `helm repo update` before install when repositories are configured
+  - **Additional arguments** – extra flags for `helm upgrade --install` (e.g. `--dry-run`, `--wait`, `--timeout 5m`)
+  - **Repositories** – optional list of `helm repo add` entries (name + URL); the plugin runs `helm repo update` before upgrade when repositories are configured
 
 - **Pipeline support**  
   Use the `helm` step (symbol `helm`) in Declarative or Scripted Pipeline.
@@ -50,7 +50,7 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
 - **Helm installation:** Select the Helm tool to use, or leave default to use the first configured installation.
 - **Values file:** Path to a values file (relative to workspace), passed to Helm as `-f`. Default: `values.yaml`. Leave empty to omit. For multiple files, use **Additional arguments** (e.g. `-f values.yaml -f prod-values.yaml`).
 - **Additional arguments:** Optional flags (e.g. `--dry-run`, `--wait`, `--set image.tag=1.0`).
-- **Repositories:** Optional list of repositories (name + URL). The plugin runs `helm repo add` for each and then `helm repo update` before `helm install`.
+- **Repositories:** Optional list of repositories (name + URL). The plugin runs `helm repo add` for each and then `helm repo update` before `helm upgrade --install`.
 
 ## Usage
 
