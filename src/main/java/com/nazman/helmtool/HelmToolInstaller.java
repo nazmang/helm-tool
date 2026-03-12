@@ -64,22 +64,20 @@ public class HelmToolInstaller extends ToolInstaller {
         installationDir.mkdirs();
 
         // On remote agents (e.g. Kubernetes pods), use a path under the workspace so the binary is on the shared
-        // volume. Otherwise /tmp or /usr/bin are per-container, so the container that runs the helm step may not see
-        // the binary installed by the installer (which can run in a different container).
+        // volume. Use tool name for a readable path (e.g. .../tools/helm/helm-3.17).
         if (installationDir.isRemote()) {
-            FilePath fallback =
-                    rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
+            String safeName = tool.getName().replaceAll("[^a-zA-Z0-9._-]", "_");
+            FilePath fallback = rootPath.child("tools/helm").child(safeName);
             if (!fallback.getRemote().equals(installationDir.getRemote())) {
                 log.getLogger()
-                        .println("Using workspace path " + fallback.getRemote()
-                                + " for Helm (works on all containers in the pod).");
+                        .println("Using " + fallback.getRemote() + " for Helm (works on all containers in the pod).");
                 installationDir = fallback;
                 installationDir.mkdirs();
             }
         } else if (!canWrite(installationDir)) {
             // Controller or single-agent: fallback only if configured path is not writable
-            FilePath fallback =
-                    rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
+            String safeName = tool.getName().replaceAll("[^a-zA-Z0-9._-]", "_");
+            FilePath fallback = rootPath.child("tools/helm").child(safeName);
             log.getLogger()
                     .println("Helm home " + installationDir.getRemote() + " is not writable; using "
                             + fallback.getRemote() + " for installation.");

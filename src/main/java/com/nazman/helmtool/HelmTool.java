@@ -164,6 +164,20 @@ public class HelmTool extends Builder implements SimpleBuildStep {
         String helmPath = helmTool.getHelmBinaryPath(node, listener);
         listener.getLogger().println("Using Helm binary at: " + helmPath);
 
+        // Verify Helm is runnable and log version before running install
+        listener.getLogger().println("Checking Helm version...");
+        int versionExit = launcher.launch()
+                .cmds(helmPath, "version")
+                .stdout(listener.getLogger())
+                .stderr(listener.getLogger())
+                .pwd(workspace)
+                .quiet(true)
+                .join();
+        if (versionExit != 0) {
+            throw new IOException("Helm version check failed with exit code " + versionExit
+                    + ". Ensure the Helm binary at " + helmPath + " is executable on this node.");
+        }
+
         // Добавляем репозитории, если они указаны
         if (repositories != null && !repositories.isEmpty()) {
             for (Repository repo : repositories) {

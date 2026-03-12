@@ -66,6 +66,11 @@ public class HelmToolInstallation extends ToolInstallation implements NodeSpecif
         FilePath helmBinary = installationDir.child("helm");
 
         if (!helmBinary.exists()) {
+            // Try common locations for pre-installed Helm (e.g. in container image)
+            String found = findHelmInCommonPaths(rootPath, log);
+            if (found != null) {
+                return found;
+            }
             String nodeName = node.getDisplayName();
             throw new IOException("Helm binary not found at " + helmBinary.getRemote()
                     + " on node '" + nodeName
@@ -73,6 +78,22 @@ public class HelmToolInstallation extends ToolInstallation implements NodeSpecif
         }
 
         return helmBinary.getRemote();
+    }
+
+    /**
+     * On remote nodes, if the configured path has no binary, check common locations (/usr/bin/helm, /usr/local/bin/helm).
+     */
+    private static String findHelmInCommonPaths(FilePath rootPath, TaskListener log)
+            throws IOException, InterruptedException {
+        String[] candidates = {"/usr/bin/helm", "/usr/local/bin/helm"};
+        for (String path : candidates) {
+            FilePath candidate = new FilePath(rootPath.getChannel(), path);
+            if (candidate.exists()) {
+                log.getLogger().println("Using pre-installed Helm at " + path);
+                return path;
+            }
+        }
+        return null;
     }
 
     private static boolean isAbsolutePath(String path) {
