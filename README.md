@@ -152,6 +152,10 @@ This means the plugin is looking for the `helm` executable in the directory you 
 
 The Helm step runs on **the node that is executing the current build stage** (the executor’s node). If your pipeline uses multiple agents—e.g. one container for build and another for "Deploy to cloud"—the deploy step runs on the deploy agent, not necessarily the container where you verified `helm`. Check the error message: it now includes the **node name** where the binary was not found. Install Helm (or enable automatic installation) on **that** node, or run the deploy stage on the same agent that has Helm (e.g. use the same `agent`/container for the stage that runs the `helm` step).
 
+### Kubernetes pods with multiple containers
+
+In a Kubernetes pod, **each container has its own `/tmp` and `/usr/bin`**. If the step runs in one container (e.g. `deploy`) and you set Helm home to `/tmp` or rely on `/usr/bin/helm`, the binary may exist in another container but not in the one that runs the command, so you get "not found" or "sh: /tmp/helm: not found". **With automatic installation**, the plugin now installs Helm under the **workspace** (e.g. `<workspace>/tools/helm/...`) on remote agents, so the binary is on the shared volume and visible in every container. Use automatic installation and leave the Helm home as-is, or set it to a path **under the workspace**. If you use a pre-installed Helm without auto-install, ensure the **same container** that runs the `helm` step has the binary (e.g. install Helm in that container's image).
+
 ## Building from source
 
 ### Prerequisites

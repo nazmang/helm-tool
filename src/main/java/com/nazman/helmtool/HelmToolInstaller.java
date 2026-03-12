@@ -63,12 +63,25 @@ public class HelmToolInstaller extends ToolInstaller {
                 isAbsolutePath(home) ? new FilePath(rootPath.getChannel(), home) : new FilePath(rootPath, home);
         installationDir.mkdirs();
 
-        // On remote agents (e.g. k8s pods), the configured home may be read-only (e.g. /usr/bin). Use a writable
-        // fallback so auto-install can succeed.
-        if (installationDir.isRemote() && !canWrite(installationDir)) {
-            FilePath fallback = rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
+        // On remote agents (e.g. Kubernetes pods), use a path under the workspace so the binary is on the shared
+        // volume. Otherwise /tmp or /usr/bin are per-container, so the container that runs the helm step may not see
+        // the binary installed by the installer (which can run in a different container).
+        if (installationDir.isRemote()) {
+            FilePath fallback =
+                    rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
+            if (!fallback.getRemote().equals(installationDir.getRemote())) {
+                log.getLogger()
+                        .println("Using workspace path " + fallback.getRemote()
+                                + " for Helm (works on all containers in the pod).");
+                installationDir = fallback;
+                installationDir.mkdirs();
+            }
+        } else if (!canWrite(installationDir)) {
+            // Controller or single-agent: fallback only if configured path is not writable
+            FilePath fallback =
+                    rootPath.child("tools/helm").child(Util.getDigestOf(tool.getName() + ":" + home));
             log.getLogger()
-                    .println("Helm home " + installationDir.getRemote() + " is not writable on this node; using "
+                    .println("Helm home " + installationDir.getRemote() + " is not writable; using "
                             + fallback.getRemote() + " for installation.");
             installationDir = fallback;
             installationDir.mkdirs();
