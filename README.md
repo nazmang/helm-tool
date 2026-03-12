@@ -12,6 +12,7 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
   - **Release name** – name of the Helm release
   - **Chart path** – path to the chart (directory or `repo/chart`)
   - **Helm installation** – choice of configured Helm tool (or first available if not set)
+  - **Values file** – path to a values file passed as `-f` (default: `values.yaml`); leave empty to omit
   - **Additional arguments** – extra flags for `helm install` (e.g. `--dry-run`, `--wait`, `--timeout 5m`)
   - **Repositories** – optional list of `helm repo add` entries (name + URL); the plugin runs `helm repo update` before install when repositories are configured
 
@@ -47,15 +48,32 @@ A [Jenkins](https://www.jenkins.io/) plugin that provides a wrapper for [Helm](h
 - **Release name:** Name of the release (e.g. `my-app`).
 - **Chart path:** Path to the chart: workspace directory (e.g. `./charts/my-chart`), `repo/chart` (e.g. `bitnami/nginx`), or an **OCI registry URL** (e.g. `oci://ghcr.io/org/charts/my-chart`). For OCI, use the `oci://` prefix; for private registries you must log in first (e.g. `helm registry login` in a prior step with credentials).
 - **Helm installation:** Select the Helm tool to use, or leave default to use the first configured installation.
+- **Values file:** Path to a values file (relative to workspace), passed to Helm as `-f`. Default: `values.yaml`. Leave empty to omit. For multiple files, use **Additional arguments** (e.g. `-f values.yaml -f prod-values.yaml`).
 - **Additional arguments:** Optional flags (e.g. `--dry-run`, `--wait`, `--set image.tag=1.0`).
 - **Repositories:** Optional list of repositories (name + URL). The plugin runs `helm repo add` for each and then `helm repo update` before `helm install`.
 
 ## Usage
 
+### Values file
+
+Use the **Values file** field to pass a single values file to Helm (`-f`). It defaults to `values.yaml`; paths are relative to the job workspace. Leave it empty to omit `-f`. For multiple values files, use **Additional arguments** (e.g. `-f values.yaml -f env/prod/values.yaml`).
+
+- **Freestyle:** Set **Values file** to e.g. `values.yaml` or `env/prod/values.yaml` (default is `values.yaml`).
+- **Pipeline:** Use the `valuesFile` parameter (default `values.yaml`):
+
+```groovy
+helm(
+  releaseName: 'my-release',
+  chartPath: './charts/my-chart',
+  valuesFile: 'values.yaml',   // optional; default is values.yaml
+  additionalArgs: '--wait --timeout 5m'
+)
+```
+
 ### Freestyle job
 
 1. Add a build step **Deploy Helm chart**.
-2. Fill in release name, chart path, and optionally Helm installation, additional arguments, and repositories.
+2. Fill in release name, chart path, and optionally Helm installation, values file (default `values.yaml`), additional arguments, and repositories.
 3. Run the job.
 
 ### Pipeline (Declarative)
@@ -70,6 +88,7 @@ pipeline {
           releaseName: 'my-release',
           chartPath: './charts/my-chart',
           helmInstallation: 'helm-3.14',
+          valuesFile: 'values.yaml',
           additionalArgs: '--wait --timeout 5m',
           repositories: [
             [name: 'bitnami', url: 'https://charts.bitnami.com/bitnami']
@@ -89,6 +108,7 @@ node {
     releaseName: 'my-release',
     chartPath: 'bitnami/nginx',
     helmInstallation: 'helm-3.14',
+    valuesFile: 'values.yaml',
     additionalArgs: '--set service.type=ClusterIP',
     repositories: [
       [name: 'bitnami', url: 'https://charts.bitnami.com/bitnami']

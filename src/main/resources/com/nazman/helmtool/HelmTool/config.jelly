@@ -10,6 +10,9 @@ xmlns:f="/lib/form">
 <f:entry title="Helm Installation" field="helmInstallation">
 <f:select />
 </f:entry>
+<f:entry title="Values file" field="valuesFile" description="Path to values file (relative to workspace). Default: values.yaml. Leave empty to omit -f.">
+<f:textbox default="values.yaml" />
+</f:entry>
 <f:entry title="Additional Helm Arguments" field="additionalArgs" description="Additional args for Helm command line (e.g., '--dry-run --create-namespace')">
 <f:textbox />
 </f:entry>

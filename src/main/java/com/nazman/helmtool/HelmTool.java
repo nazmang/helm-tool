@@ -28,6 +28,7 @@ public class HelmTool extends Builder implements SimpleBuildStep {
     private final String chartPath;
     private final String helmInstallation;
     private final String additionalArgs;
+    private String valuesFile;
     private List<Repository> repositories = new ArrayList<>();
 
     @DataBoundConstructor
@@ -52,6 +53,19 @@ public class HelmTool extends Builder implements SimpleBuildStep {
 
     public String getAdditionalArgs() {
         return additionalArgs;
+    }
+
+    /**
+     * Path to values file passed to Helm as {@code -f}. Default in the UI is "values.yaml".
+     * When null or empty, no {@code -f} is added (backward compatible).
+     */
+    @DataBoundSetter
+    public void setValuesFile(String valuesFile) {
+        this.valuesFile = valuesFile;
+    }
+
+    public String getValuesFile() {
+        return valuesFile;
     }
 
     @DataBoundSetter
@@ -218,8 +232,17 @@ public class HelmTool extends Builder implements SimpleBuildStep {
             }
         }
 
+        String valuesFileArg = "";
+        if (valuesFile != null && !valuesFile.trim().isEmpty()) {
+            valuesFileArg = "-f " + valuesFile.trim() + " ";
+        }
         String helmCommand = String.format(
-                "%s install %s %s %s", helmPath, releaseName, chartPath, additionalArgs != null ? additionalArgs : "");
+                "%s install %s %s %s%s",
+                helmPath,
+                releaseName,
+                chartPath,
+                valuesFileArg,
+                additionalArgs != null ? additionalArgs : "");
 
         listener.getLogger().println("Executing: " + helmCommand);
 
